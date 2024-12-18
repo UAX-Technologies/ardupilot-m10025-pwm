@@ -1,0 +1,9 @@
+local led_state = 0
+
+function update()
+    led_state = 1 - led_state  -- Toggle between 0 and 1
+    hal.leds:set(0, led_state) -- Control LED 0
+    return update, 3500        -- Repeat every 1 second
+end
+
+return update()
