@@ -405,6 +405,10 @@ void AP_Periph_FW::show_stack_free()
 #endif
 
 
+void mavlink_pwm_conv()
+{
+    // Add custom code here
+}
 
 void AP_Periph_FW::update()
 {
@@ -545,7 +549,12 @@ void AP_Periph_FW::update()
 #ifdef HAL_PERIPH_ENABLE_ADSB
     adsb_update();
 #endif
+
+// Call custom code
+mavlink_pwm_conv();
+
 }
+
 
 #ifdef HAL_PERIPH_LISTEN_FOR_SERIAL_UART_REBOOT_CMD_PORT
 // check for uploader.py reboot command

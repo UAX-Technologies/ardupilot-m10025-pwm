@@ -130,9 +130,9 @@ define AP_SERVORELAYEVENTS_ENABLED 1
 #define AP_SCHEDULER_ENABLED 1
 
 #Enable scripting
-define AP_SCRIPTING_ENABLED 1
+# define AP_SCRIPTING_ENABLED 1
 # Needed to enable scripting per this comment: https://discuss.ardupilot.org/t/lua-scripting-on-ap-periph/123056
-define AP_FILESYSTEM_ROMFS_ENABLED 1
+#define AP_FILESYSTEM_ROMFS_ENABLED 1
 
 
 
