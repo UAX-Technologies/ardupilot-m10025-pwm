@@ -408,13 +408,14 @@ void AP_Periph_FW::show_stack_free()
 void mavlink_pwm_conv()
 {
     // Add custom code here
+    //PWM 0 is pin 2 on the mro board i2c port
+    //PWM 1 is pin 3 on the mro board i2c port
     hal.rcout->set_freq(1, 50);
     hal.rcout->enable_ch(1);
     hal.rcout->force_safety_off();
-     for (uint8_t i=0; i < 14; i++) {
-     hal.rcout->write(i, 1500); //channel 1, PWM 2000
-    }
-    //RC_Channel_aux::set_servo_out(RC_Channel_aux::k_rudder, 4500);
+    hal.rcout->write(0, 1000); //channel 0, PWM 1000 
+    hal.rcout->write(1, 2000); //channel 1, PWM 2000
+
 }
 
 void AP_Periph_FW::update()
