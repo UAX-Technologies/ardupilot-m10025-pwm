@@ -408,6 +408,13 @@ void AP_Periph_FW::show_stack_free()
 void mavlink_pwm_conv()
 {
     // Add custom code here
+    hal.rcout->set_freq(1, 50);
+    hal.rcout->enable_ch(1);
+    hal.rcout->force_safety_off();
+     for (uint8_t i=0; i < 14; i++) {
+     hal.rcout->write(i, 1500); //channel 1, PWM 2000
+    }
+    //RC_Channel_aux::set_servo_out(RC_Channel_aux::k_rudder, 4500);
 }
 
 void AP_Periph_FW::update()
