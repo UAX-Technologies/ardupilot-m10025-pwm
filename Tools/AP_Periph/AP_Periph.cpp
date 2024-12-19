@@ -416,6 +416,8 @@ void mavlink_pwm_conv()
     hal.rcout->write(0, 1000); //channel 0, PWM 1000 
     hal.rcout->write(1, 2000); //channel 1, PWM 2000
 
+    hal.serial(3)->begin(115200);
+    hal.serial(3)->write("A");
 }
 
 void AP_Periph_FW::update()
