@@ -59,7 +59,30 @@ void stm32_watchdog_pat() {}
 void setup(void)
 {
     periph.init();
+
+    // Initialization for custom code
+        //PWM 0 is pin 2 on the mro board i2c port
+        //PWM 1 is pin 3 on the mro board i2c port
+        hal.rcout->set_freq(1, 50);
+        hal.rcout->enable_ch(1);
+        hal.rcout->force_safety_off();
+        // Setup Serial Port for Mavlink
+        mavlink_comm_port[MAVLINK_COMM_0] = hal.serial(3);
+        mavlink_system.sysid = 42;  // Set your desired system ID
+        mavlink_system.compid = 200; // Set your desired component ID
+        // Initialize PWM at these values
+        hal.rcout->write(0, 1500);
+        hal.rcout->write(1, 1500);
+        // Serial port initialize
+        hal.serial(3)->begin(57600);
 }
+
+    //Custom code variables
+    // Initialize dumb tick counter
+    static uint32_t loop_counter = 0; // Counter to track loop iterations
+    static uint32_t last_cmd_ack_counter = 0; // Track the last received command acknowledgment loop count
+    static const uint32_t timeout_loops = 1000; // Timeout to reset PWM (in loop iterations)
+
 
 void loop(void)
 {
@@ -404,7 +427,62 @@ void AP_Periph_FW::show_stack_free()
 }
 #endif
 
+#include "GCS_MAVLink.h"
+void mavlink_pwm_conv()
+{
+    // Add custom code here
+    while (hal.serial(3)->available()) {
+        uint8_t c = hal.serial(3)->read();
+        static mavlink_message_t msg;
+        static mavlink_status_t status;
+        // Increment the loop counter
+        loop_counter++;
+        // Custom implementation to manually parse MAVLink messages without mavlink_parse_char
+        if (mavlink_frame_char(MAVLINK_COMM_0, c, &msg, &status)) {
+            if (msg.msgid == MAVLINK_MSG_ID_COMMAND_ACK) {
+                mavlink_command_ack_t cmd_ack;
+                mavlink_msg_command_ack_decode(&msg, &cmd_ack);
+                if (cmd_ack.command == MAV_CMD_DO_DIGICAM_CONTROL) {
+                    // Trigger action (e.g., set PWM)
+                    hal.rcout->write(0, 2000);
+                    hal.rcout->write(1, 2000);
+                    last_cmd_ack_counter = loop_counter; // Update the last command acknowledgment loop count
+                }
+            }
+        }
 
+        /*
+        //Test outputting mavlink message
+            static mavlink_message_t heartbeat_msg; // Declare heartbeat_msg as static
+            uint8_t buffer[MAVLINK_MAX_PACKET_LEN];
+            mavlink_message_t trigger_msg;
+
+                // Pack a MAVLink heartbeat message
+                mavlink_msg_heartbeat_pack(
+                    mavlink_system.sysid, 
+                    mavlink_system.compid, 
+                    &heartbeat_msg, 
+                    MAV_TYPE_GENERIC, 
+                    MAV_AUTOPILOT_ARDUPILOTMEGA, 
+                    MAV_MODE_MANUAL_ARMED, 
+                    0, 
+                    MAV_STATE_ACTIVE
+                );
+
+            // Serialize and send the message
+            uint16_t len = mavlink_msg_to_send_buffer(buffer, &trigger_msg);
+            comm_send_buffer(MAVLINK_COMM_0, buffer, len);
+        */
+        // Check for timeout to reset PWM
+        if ((uint32_t)(loop_counter - last_cmd_ack_counter) > timeout_loops) {
+            hal.rcout->write(0, 1000); // Reset to default PWM value
+            hal.rcout->write(1, 1000);
+        }
+    }
+
+
+
+}
 
 void AP_Periph_FW::update()
 {
@@ -545,7 +623,12 @@ void AP_Periph_FW::update()
 #ifdef HAL_PERIPH_ENABLE_ADSB
     adsb_update();
 #endif
+
+// Call custom code
+mavlink_pwm_conv();
+
 }
+
 
 #ifdef HAL_PERIPH_LISTEN_FOR_SERIAL_UART_REBOOT_CMD_PORT
 // check for uploader.py reboot command
