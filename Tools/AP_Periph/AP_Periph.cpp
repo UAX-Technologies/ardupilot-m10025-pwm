@@ -71,8 +71,8 @@ void setup(void)
         mavlink_system.sysid = 42;  // Set your desired system ID
         mavlink_system.compid = 200; // Set your desired component ID
         // Test Code
-        hal.rcout->write(0, 250); //channel 1, PWM 2000
-        hal.rcout->write(1, 500); //channel 1, PWM 2000
+        hal.rcout->write(0, 1500); //channel 1, PWM 2000
+        hal.rcout->write(1, 1500); //channel 1, PWM 2000
 
 }
 
@@ -442,10 +442,11 @@ void mavlink_pwm_conv()
 
             if (cmd_ack.command == MAV_CMD_DO_DIGICAM_CONTROL) {
                 // Trigger action (e.g., set PWM)
-                hal.rcout->write(0, 2000); // channel 0, PWM 2000
-                hal.rcout->write(1, 1500); //putting this here as a test. If called once it should be persistent
+                hal.rcout->write(0, 2000);
+                hal.rcout->write(1, 2000);
             } else {
-                hal.rcout->write(0, 1000); // channel 0, PWM 1000
+                hal.rcout->write(0, 1000);
+                hal.rcout->write(1, 1000);
             }
         }
     }
