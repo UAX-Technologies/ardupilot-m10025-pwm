@@ -114,27 +114,4 @@ PB7 TIM3_CH4 TIM3 PWM(2) GPIO(51)
 define HAL_PERIPH_ENABLE_RC_OUT
 define HAL_PERIPH_ENABLE_SERIAL_OPTIONS
 
-
-#define HAL_PERIPH_ENABLE_PWM_HARDPOINT
-#define HAL_PWM_HARDPOINT_ID_DEFAULT 101
-#define PWM_HARDPOINT_PIN 77
-#define SERIAL4_PROTOCOL 2  # MAVLink
-#define HAL_GCS_ENABLED
-
-
-
-#define AP_RC_CHANNEL_ENABLED 1
-
-define AP_RELAY_ENABLED 1
-define AP_SERVORELAYEVENTS_ENABLED 1
-#define AP_SCHEDULER_ENABLED 1
-
-#Enable scripting
-# define AP_SCRIPTING_ENABLED 1
-# Needed to enable scripting per this comment: https://discuss.ardupilot.org/t/lua-scripting-on-ap-periph/123056
-#define AP_FILESYSTEM_ROMFS_ENABLED 1
-
-
-
-#define CONFIG_LUA_ENABLED 1
-
+define HAL_GCS_ENABLED 1

@@ -59,6 +59,12 @@ void stm32_watchdog_pat() {}
 void setup(void)
 {
     periph.init();
+
+    // Test code
+    mavlink_comm_port[MAVLINK_COMM_0] = hal.serial(3);
+    mavlink_system.sysid = 42;  // Set your desired system ID
+    mavlink_system.compid = 200; // Set your desired component ID
+
 }
 
 void loop(void)
@@ -404,7 +410,7 @@ void AP_Periph_FW::show_stack_free()
 }
 #endif
 
-
+#include "GCS_MAVLink.h"
 void mavlink_pwm_conv()
 {
     // Add custom code here
@@ -413,11 +419,61 @@ void mavlink_pwm_conv()
     hal.rcout->set_freq(1, 50);
     hal.rcout->enable_ch(1);
     hal.rcout->force_safety_off();
-    hal.rcout->write(0, 1000); //channel 0, PWM 1000 
-    hal.rcout->write(1, 2000); //channel 1, PWM 2000
+    hal.rcout->write(0, 250); //channel 1, PWM 2000
+    hal.rcout->write(1, 500); //channel 1, PWM 2000
 
     hal.serial(3)->begin(115200);
-    hal.serial(3)->write("A");
+
+
+
+    while (hal.serial(3)->available()) {
+    uint8_t c = hal.serial(3)->read();
+    static mavlink_message_t msg;
+    static mavlink_status_t status;
+        static mavlink_message_t heartbeat_msg; // Declare heartbeat_msg as static
+
+
+    // Custom implementation to manually parse MAVLink messages without mavlink_parse_char
+    if (mavlink_frame_char(MAVLINK_COMM_0, c, &msg, &status)) {
+        if (msg.msgid == MAVLINK_MSG_ID_COMMAND_LONG) {
+            mavlink_command_long_t cmd;
+            mavlink_msg_command_long_decode(&msg, &cmd);
+
+            if (cmd.command == MAV_CMD_DO_TRIGGER_CONTROL) {
+                // Trigger action (e.g., set PWM)
+                hal.rcout->write(0, 2000); // channel 0, PWM 2000
+            } else {
+                hal.rcout->write(0, 1000); // channel 0, PWM 1000
+            }
+        }
+    }
+
+    //Test outputting mavlink message
+        uint8_t buffer[MAVLINK_MAX_PACKET_LEN];
+        mavlink_message_t trigger_msg;
+        mavlink_command_long_t cmd;
+        mavlink_msg_command_long_decode(&msg, &cmd);
+
+            // Pack a MAVLink heartbeat message
+            mavlink_msg_heartbeat_pack(
+                mavlink_system.sysid, 
+                mavlink_system.compid, 
+                &heartbeat_msg, 
+                MAV_TYPE_GENERIC, 
+                MAV_AUTOPILOT_ARDUPILOTMEGA, 
+                MAV_MODE_MANUAL_ARMED, 
+                0, 
+                MAV_STATE_ACTIVE
+            );
+
+        // Serialize and send the message
+        uint16_t len = mavlink_msg_to_send_buffer(buffer, &trigger_msg);
+        comm_send_buffer(MAVLINK_COMM_0, buffer, len);
+
+}
+
+
+
 }
 
 void AP_Periph_FW::update()
