@@ -60,10 +60,19 @@ void setup(void)
 {
     periph.init();
 
-    // Test code
-    mavlink_comm_port[MAVLINK_COMM_0] = hal.serial(3);
-    mavlink_system.sysid = 42;  // Set your desired system ID
-    mavlink_system.compid = 200; // Set your desired component ID
+    // Initialization for custom code
+        //PWM 0 is pin 2 on the mro board i2c port
+        //PWM 1 is pin 3 on the mro board i2c port
+        hal.rcout->set_freq(1, 50);
+        hal.rcout->enable_ch(1);
+        hal.rcout->force_safety_off();
+        // Setup Serial Port for Mavlink
+        mavlink_comm_port[MAVLINK_COMM_0] = hal.serial(3);
+        mavlink_system.sysid = 42;  // Set your desired system ID
+        mavlink_system.compid = 200; // Set your desired component ID
+        // Test Code
+        hal.rcout->write(0, 250); //channel 1, PWM 2000
+        hal.rcout->write(1, 500); //channel 1, PWM 2000
 
 }
 
@@ -414,14 +423,6 @@ void AP_Periph_FW::show_stack_free()
 void mavlink_pwm_conv()
 {
     // Add custom code here
-    //PWM 0 is pin 2 on the mro board i2c port
-    //PWM 1 is pin 3 on the mro board i2c port
-    hal.rcout->set_freq(1, 50);
-    hal.rcout->enable_ch(1);
-    hal.rcout->force_safety_off();
-    hal.rcout->write(0, 250); //channel 1, PWM 2000
-    hal.rcout->write(1, 500); //channel 1, PWM 2000
-
     hal.serial(3)->begin(115200);
 
 
@@ -430,18 +431,19 @@ void mavlink_pwm_conv()
     uint8_t c = hal.serial(3)->read();
     static mavlink_message_t msg;
     static mavlink_status_t status;
-        static mavlink_message_t heartbeat_msg; // Declare heartbeat_msg as static
+    static mavlink_message_t heartbeat_msg; // Declare heartbeat_msg as static
 
 
     // Custom implementation to manually parse MAVLink messages without mavlink_parse_char
     if (mavlink_frame_char(MAVLINK_COMM_0, c, &msg, &status)) {
-        if (msg.msgid == MAVLINK_MSG_ID_COMMAND_LONG) {
-            mavlink_command_long_t cmd;
-            mavlink_msg_command_long_decode(&msg, &cmd);
+        if (msg.msgid == MAVLINK_MSG_ID_COMMAND_ACK) {
+            mavlink_command_ack_t cmd_ack;
+            mavlink_msg_command_ack_decode(&msg, &cmd_ack);
 
-            if (cmd.command == MAV_CMD_DO_TRIGGER_CONTROL) {
+            if (cmd_ack.command == MAV_CMD_DO_DIGICAM_CONTROL) {
                 // Trigger action (e.g., set PWM)
                 hal.rcout->write(0, 2000); // channel 0, PWM 2000
+                hal.rcout->write(1, 1500); //putting this here as a test. If called once it should be persistent
             } else {
                 hal.rcout->write(0, 1000); // channel 0, PWM 1000
             }
@@ -451,8 +453,6 @@ void mavlink_pwm_conv()
     //Test outputting mavlink message
         uint8_t buffer[MAVLINK_MAX_PACKET_LEN];
         mavlink_message_t trigger_msg;
-        mavlink_command_long_t cmd;
-        mavlink_msg_command_long_decode(&msg, &cmd);
 
             // Pack a MAVLink heartbeat message
             mavlink_msg_heartbeat_pack(
